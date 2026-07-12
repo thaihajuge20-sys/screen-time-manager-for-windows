@@ -23,7 +23,7 @@ LicenseFile=..\LICENSE
 
 [Files]
 Source: "..\target\release\screen-time-manager.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\scripts\install-service.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion; AfterInstall: InstallService
+Source: "..\scripts\install-service.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion
 Source: "..\scripts\uninstall-service.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 
@@ -47,6 +47,12 @@ begin
       Parameters, '', SW_HIDE, ewWaitUntilTerminated, ResultCode)) or
       (ResultCode <> 0) then
     RaiseException(Format('Service installation failed with exit code %d.', [ResultCode]));
+end;
+
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if CurStep = ssPostInstall then
+    InstallService;
 end;
 
 function PrepareToInstall(var NeedsRestart: Boolean): String;

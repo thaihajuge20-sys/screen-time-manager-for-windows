@@ -48,7 +48,10 @@ Describe "Screen Time Manager installer" {
     }
 
     It "checks service setup after files are installed and cleans up before removal" {
-        $Installer | Should -Match 'AfterInstall: InstallService'
+        $Installer | Should -Not -Match 'AfterInstall: InstallService'
+        $Installer | Should -Match 'CurStepChanged\(CurStep: TSetupStep\)'
+        $Installer | Should -Match 'CurStep = ssPostInstall'
+        $Installer | Should -Match 'InstallService;'
         $Installer | Should -Match 'RaiseException'
         $Installer | Should -Match 'install-service\.ps1'
         $Installer | Should -Match '\[UninstallRun\]'
