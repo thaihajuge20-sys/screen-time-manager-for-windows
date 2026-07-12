@@ -46,6 +46,7 @@ fn main() {
          VALUE \"ProductName\", \"Screen Time Manager\"\n\
          VALUE \"ProductVersion\", \"{version}.0\"\n\
          END\n\
+         END\n\
          BLOCK \"VarFileInfo\"\n\
          BEGIN\n\
          VALUE \"Translation\", 0x409, 1200\n\

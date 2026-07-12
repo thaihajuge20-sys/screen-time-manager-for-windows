@@ -14,6 +14,7 @@ mod i18n;
 mod mini_overlay;
 mod overlay;
 mod run_mode;
+mod service;
 mod telegram;
 mod tray;
 
@@ -41,7 +42,19 @@ use std::sync::atomic::Ordering;
 
 fn main() {
     if run_mode::parse_run_mode(std::env::args_os()) == run_mode::RunMode::Service {
-        // The Windows service entrypoint is added in the next implementation task.
+        if let Err(error) = service::run() {
+            let message: Vec<u16> = format!("Screen Time Manager service failed: {error}\0")
+                .encode_utf16()
+                .collect();
+            unsafe {
+                MessageBoxW(
+                    None,
+                    PCWSTR(message.as_ptr()),
+                    w!("Service Error"),
+                    MB_OK | MB_ICONERROR,
+                );
+            }
+        }
         return;
     }
 
