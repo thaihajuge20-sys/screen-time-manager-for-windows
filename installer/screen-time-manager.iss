@@ -53,7 +53,7 @@ begin
     if not LoadStringFromFile(ServiceLogPath, ServiceLog) then
       ServiceLog := 'No service installation log was written.';
     RaiseException(Format('Service installation failed with exit code %d.%s%s',
-      [ResultCode, #13#10, ServiceLog]));
+      [ResultCode, Chr(13) + Chr(10), ServiceLog]));
   end;
 end;
 
