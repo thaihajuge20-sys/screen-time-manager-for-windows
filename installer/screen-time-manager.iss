@@ -39,14 +39,22 @@ procedure InstallService();
 var
   ResultCode: Integer;
   Parameters: String;
+  ServiceLog: String;
+  ServiceLogPath: String;
 begin
+  ServiceLogPath := ExpandConstant('{tmp}\screen-time-manager-service-install.log');
   Parameters := '-NoProfile -ExecutionPolicy Bypass -File "' +
     ExpandConstant('{app}\scripts\install-service.ps1') + '" -ExePath "' +
-    ExpandConstant('{app}\screen-time-manager.exe') + '"';
+    ExpandConstant('{app}\screen-time-manager.exe') + '" -LogPath "' +
+    ServiceLogPath + '"';
   if (not Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
       Parameters, '', SW_HIDE, ewWaitUntilTerminated, ResultCode)) or
-      (ResultCode <> 0) then
-    RaiseException(Format('Service installation failed with exit code %d.', [ResultCode]));
+      (ResultCode <> 0) then begin
+    if not LoadStringFromFile(ServiceLogPath, ServiceLog) then
+      ServiceLog := 'No service installation log was written.';
+    RaiseException(Format('Service installation failed with exit code %d.%s%s',
+      [ResultCode, #13#10, ServiceLog]));
+  end;
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);

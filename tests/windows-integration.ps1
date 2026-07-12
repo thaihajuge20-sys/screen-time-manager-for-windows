@@ -84,7 +84,7 @@ catch {
     $serviceInstallLog = Join-Path $env:ProgramData "ScreenTimeManager\install-service.log"
     if (Test-Path $serviceInstallLog) {
         Write-Host "--- Service installation log ---"
-        Get-Content $serviceInstallLog
+        Write-Host (Get-Content $serviceInstallLog -Raw)
     }
 }
 finally {
