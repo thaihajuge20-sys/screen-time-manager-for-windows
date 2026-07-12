@@ -1,4 +1,8 @@
-use super::{restart_policy::RestartPolicy, SERVICE_NAME};
+use super::{
+    event_log::{write_event, ServiceEvent},
+    restart_policy::RestartPolicy,
+    SERVICE_NAME,
+};
 use std::{
     ffi::{c_void, OsString},
     mem::{size_of, zeroed},
@@ -63,6 +67,7 @@ fn run_service() -> Result<()> {
         ServiceState::Running,
         ServiceControlAccept::STOP | ServiceControlAccept::SHUTDOWN,
     ))?;
+    write_event(ServiceEvent::Started);
 
     supervise_user_interface(&stop_rx);
 
@@ -70,6 +75,7 @@ fn run_service() -> Result<()> {
         ServiceState::Stopped,
         ServiceControlAccept::empty(),
     ))?;
+    write_event(ServiceEvent::Stopped);
     Ok(())
 }
 
@@ -99,7 +105,15 @@ fn supervise_user_interface(stop_rx: &Receiver<()>) {
         let started_at = Instant::now();
         let child = match launch_user_interface() {
             Ok(child) => child,
-            Err(_) => {
+            Err(LaunchError::NoActiveSession) => {
+                write_event(ServiceEvent::NoActiveSession);
+                if wait_or_stop(stop_rx, Duration::from_secs(2)) {
+                    return;
+                }
+                continue;
+            }
+            Err(LaunchError::Windows(error)) => {
+                write_event(ServiceEvent::ChildLaunchFailed(error.code().0));
                 if wait_or_stop(stop_rx, Duration::from_secs(2)) {
                     return;
                 }
@@ -109,6 +123,9 @@ fn supervise_user_interface(stop_rx: &Receiver<()>) {
 
         let stopping = wait_for_child_or_stop(&child, stop_rx);
         let runtime = started_at.elapsed();
+        if !stopping {
+            write_event(ServiceEvent::ChildExited);
+        }
         if let Some(delay) = restart_policy.next_delay(runtime, stopping) {
             if wait_or_stop(stop_rx, delay) {
                 return;
@@ -148,10 +165,10 @@ fn wait_for_child_or_stop(child: &OwnedHandle, stop_rx: &Receiver<()>) -> bool {
     }
 }
 
-fn launch_user_interface() -> windows::core::Result<OwnedHandle> {
+fn launch_user_interface() -> std::result::Result<OwnedHandle, LaunchError> {
     let session_id = unsafe { WTSGetActiveConsoleSessionId() };
     if session_id == NO_ACTIVE_SESSION {
-        return Err(windows::core::Error::from_win32());
+        return Err(LaunchError::NoActiveSession);
     }
 
     let mut session_token = HANDLE::default();
@@ -207,6 +224,23 @@ fn launch_user_interface() -> windows::core::Result<OwnedHandle> {
     }
 
     Ok(OwnedHandle::new(process_info.hProcess))
+}
+
+enum LaunchError {
+    NoActiveSession,
+    Windows(windows::core::Error),
+}
+
+impl From<windows::core::Error> for LaunchError {
+    fn from(error: windows::core::Error) -> Self {
+        Self::Windows(error)
+    }
+}
+
+impl From<std::io::Error> for LaunchError {
+    fn from(error: std::io::Error) -> Self {
+        Self::Windows(error.into())
+    }
 }
 
 struct OwnedHandle(HANDLE);

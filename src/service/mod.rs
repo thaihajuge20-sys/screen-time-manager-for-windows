@@ -1,3 +1,4 @@
+pub mod event_log;
 pub mod restart_policy;
 
 pub const SERVICE_NAME: &str = "ScreenTimeManagerService";
