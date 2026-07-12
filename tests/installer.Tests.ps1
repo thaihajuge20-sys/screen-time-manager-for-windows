@@ -18,9 +18,10 @@ Describe "Screen Time Manager installer" {
 
     It "registers the service with the stable identity and automatic startup" {
         $InstallService | Should -Match 'ScreenTimeManagerService'
-        $InstallService | Should -Match 'binPath='
+        $InstallService | Should -Match 'New-Service'
+        $InstallService | Should -Match '-BinaryPathName \$binaryPath'
+        $InstallService | Should -Match '-StartupType Automatic'
         $InstallService | Should -Match '\-\-service'
-        $InstallService | Should -Match '"start=", "auto"'
     }
 
     It "configures service recovery and starts the service" {

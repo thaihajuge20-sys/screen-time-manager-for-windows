@@ -50,7 +50,8 @@ try {
         Start-Sleep -Seconds 1
     }
 
-    Invoke-ServiceControl -Arguments @("create", $ServiceName, "binPath=", $binaryPath, "start=", "auto", "obj=", "LocalSystem", "DisplayName=", $DisplayName)
+    New-Service -Name $ServiceName -BinaryPathName $binaryPath -DisplayName $DisplayName -StartupType Automatic | Out-Null
+    Add-Content -Path $LogPath -Value "Created automatic LocalSystem service with binary path: $binaryPath"
     Invoke-ServiceControl -Arguments @("description", $ServiceName, "Starts and restores the Screen Time Manager user interface.")
     Invoke-ServiceControl -Arguments @("failure", $ServiceName, "reset=", "86400", "actions=", "restart/2000/restart/5000/restart/30000")
     Invoke-ServiceControl -Arguments @("failureflag", $ServiceName, "1")
