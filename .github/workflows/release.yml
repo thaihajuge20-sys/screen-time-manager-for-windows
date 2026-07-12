@@ -36,6 +36,17 @@ jobs:
       - name: Build release binary
         run: cargo build --release
 
+      - name: Install Pester and Inno Setup
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module Pester -Scope CurrentUser -Force -SkipPublisherCheck
+          choco install innosetup --yes --no-progress
+
+      - name: Verify installer rules
+        shell: pwsh
+        run: Invoke-Pester tests/installer.Tests.ps1 -Output Detailed
+
       - name: Get version from Cargo.toml
         id: version
         shell: pwsh
@@ -51,6 +62,13 @@ jobs:
           $hash = git rev-parse --short HEAD
           echo "HASH=$hash" >> $env:GITHUB_OUTPUT
           echo "Commit: $hash"
+
+      - name: Compile Windows installer
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.VERSION }}"
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DMyAppVersion=$version" installer\screen-time-manager.iss
+          echo "INSTALLER_NAME=ScreenTimeManager-Setup-$version.exe" >> $env:GITHUB_ENV
 
       - name: Create release archive
         shell: pwsh
@@ -150,11 +168,13 @@ jobs:
           $version = "${{ steps.version.outputs.VERSION }}"
           $tagName = "v$version"
           $archiveName = $env:ARCHIVE_NAME
+          $installerName = $env:INSTALLER_NAME
 
           gh release create $tagName `
             --title "Screen Time Manager v$version" `
             --notes-file "RELEASE_NOTES.md" `
-            $archiveName
+            $archiveName `
+            "dist/$installerName"
 
       - name: Update existing release
         if: steps.check_release.outputs.EXISTS == 'true'
@@ -165,14 +185,16 @@ jobs:
           $version = "${{ steps.version.outputs.VERSION }}"
           $tagName = "v$version"
           $archiveName = $env:ARCHIVE_NAME
+          $installerName = $env:INSTALLER_NAME
 
           # Delete old asset if exists
           $assets = gh release view $tagName --json assets | ConvertFrom-Json
           foreach ($asset in $assets.assets) {
-            if ($asset.name -eq $archiveName) {
+            if ($asset.name -in @($archiveName, $installerName)) {
               gh release delete-asset $tagName $asset.name --yes
             }
           }
 
           # Upload new asset
           gh release upload $tagName $archiveName --clobber
+          gh release upload $tagName "dist/$installerName" --clobber

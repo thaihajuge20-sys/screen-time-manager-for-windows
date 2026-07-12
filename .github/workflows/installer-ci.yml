@@ -1,0 +1,59 @@
+name: Windows Installer CI
+
+on:
+  push:
+    branches:
+      - main
+      - release
+      - "codex/**"
+  pull_request:
+
+jobs:
+  build-installer:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-installer-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run Rust tests
+        run: cargo test --locked
+
+      - name: Build release executable
+        run: cargo build --release --locked
+
+      - name: Install Pester and Inno Setup
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module Pester -Scope CurrentUser -Force -SkipPublisherCheck
+          choco install innosetup --yes --no-progress
+
+      - name: Verify installer rules
+        shell: pwsh
+        run: Invoke-Pester tests/installer.Tests.ps1 -Output Detailed
+
+      - name: Compile Setup.exe with iscc
+        shell: pwsh
+        run: |
+          $version = (Select-String -Path Cargo.toml -Pattern '^version = "(.+)"').Matches.Groups[1].Value
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DMyAppVersion=$version" installer\screen-time-manager.iss
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: screen-time-manager-windows-installer
+          path: dist/ScreenTimeManager-Setup-*.exe
+          if-no-files-found: error

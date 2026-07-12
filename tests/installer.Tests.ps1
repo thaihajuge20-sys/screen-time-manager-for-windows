@@ -4,6 +4,7 @@ Describe "Screen Time Manager installer" {
         $Installer = Get-Content (Join-Path $RepoRoot "installer/screen-time-manager.iss") -Raw
         $InstallService = Get-Content (Join-Path $RepoRoot "scripts/install-service.ps1") -Raw
         $UninstallService = Get-Content (Join-Path $RepoRoot "scripts/uninstall-service.ps1") -Raw
+        $InstallerWorkflow = Get-Content (Join-Path $RepoRoot ".github/workflows/installer-ci.yml") -Raw
     }
 
     It "requires administrator rights and installs under Program Files" {
@@ -38,5 +39,14 @@ Describe "Screen Time Manager installer" {
         $Installer | Should -Match 'install-service\.ps1'
         $Installer | Should -Match '\[UninstallRun\]'
         $Installer | Should -Match 'uninstall-service\.ps1'
+    }
+
+    It "verifies tests, release build, Pester, Inno Setup, and installer artifact in Windows CI" {
+        $InstallerWorkflow | Should -Match 'windows-latest'
+        $InstallerWorkflow | Should -Match 'cargo test'
+        $InstallerWorkflow | Should -Match 'cargo build --release'
+        $InstallerWorkflow | Should -Match 'Invoke-Pester'
+        $InstallerWorkflow | Should -Match 'iscc'
+        $InstallerWorkflow | Should -Match 'upload-artifact'
     }
 }
