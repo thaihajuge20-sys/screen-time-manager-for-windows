@@ -28,29 +28,37 @@ function Invoke-ServiceControl {
     }
 }
 
-$identity = [Security.Principal.WindowsIdentity]::GetCurrent()
-$principal = [Security.Principal.WindowsPrincipal]::new($identity)
-if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    throw "Administrator rights are required to install the service."
+try {
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = [Security.Principal.WindowsPrincipal]::new($identity)
+    if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        throw "Administrator rights are required to install the service."
+    }
+
+    $ExePath = (Resolve-Path $ExePath).Path
+    $binaryPath = "`"$ExePath`" --service"
+
+    $legacyTask = Get-ScheduledTask -TaskName $LegacyTaskName -ErrorAction SilentlyContinue
+    if ($legacyTask) {
+        Unregister-ScheduledTask -TaskName $LegacyTaskName -Confirm:$false
+    }
+
+    if (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) {
+        Invoke-ServiceControl -Arguments @("stop", $ServiceName)
+        Start-Sleep -Seconds 2
+        Invoke-ServiceControl -Arguments @("delete", $ServiceName)
+        Start-Sleep -Seconds 1
+    }
+
+    Invoke-ServiceControl -Arguments @("create", $ServiceName, "binPath=", $binaryPath, "start=", "auto", "obj=", "LocalSystem", "DisplayName=", $DisplayName)
+    Invoke-ServiceControl -Arguments @("description", $ServiceName, "Starts and restores the Screen Time Manager user interface.")
+    Invoke-ServiceControl -Arguments @("failure", $ServiceName, "reset=", "86400", "actions=", "restart/2000/restart/5000/restart/30000")
+    Invoke-ServiceControl -Arguments @("failureflag", $ServiceName, "1")
+    Invoke-ServiceControl -Arguments @("start", $ServiceName)
+} catch {
+    Add-Content -Path $LogPath -Value @(
+        "Service installation failed:",
+        ($_ | Out-String)
+    )
+    throw
 }
-
-$ExePath = (Resolve-Path $ExePath).Path
-$binaryPath = "`"$ExePath`" --service"
-
-$legacyTask = Get-ScheduledTask -TaskName $LegacyTaskName -ErrorAction SilentlyContinue
-if ($legacyTask) {
-    Unregister-ScheduledTask -TaskName $LegacyTaskName -Confirm:$false
-}
-
-if (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) {
-    Invoke-ServiceControl @("stop", $ServiceName)
-    Start-Sleep -Seconds 2
-    Invoke-ServiceControl @("delete", $ServiceName)
-    Start-Sleep -Seconds 1
-}
-
-Invoke-ServiceControl @("create", $ServiceName, "binPath=", $binaryPath, "start=", "auto", "obj=", "LocalSystem", "DisplayName=", $DisplayName)
-Invoke-ServiceControl @("description", $ServiceName, "Starts and restores the Screen Time Manager user interface.")
-Invoke-ServiceControl @("failure", $ServiceName, "reset=", "86400", "actions=", "restart/2000/restart/5000/restart/30000")
-Invoke-ServiceControl @("failureflag", $ServiceName, "1")
-Invoke-ServiceControl @("start", $ServiceName)

@@ -25,7 +25,16 @@ Describe "Screen Time Manager installer" {
 
     It "configures service recovery and starts the service" {
         $InstallService | Should -Match 'failure.*restart'
-        $InstallService | Should -Match 'Invoke-ServiceControl @\("start"'
+        $InstallService | Should -Match 'Invoke-ServiceControl -Arguments @\("start"'
+    }
+
+    It "passes every service control argument array by its named parameter" {
+        $serviceCalls = [regex]::Matches($InstallService, '(?m)^\s*Invoke-ServiceControl [^\r\n]+')
+        $serviceCalls.Count | Should -BeGreaterThan 0
+        foreach ($serviceCall in $serviceCalls) {
+            $serviceCall.Value | Should -Match '^\s*Invoke-ServiceControl -Arguments @\('
+        }
+        $InstallService | Should -Match 'catch\s*\{[\s\S]*Add-Content -Path \$LogPath'
     }
 
     It "removes the legacy scheduled task to prevent duplicate startup" {
