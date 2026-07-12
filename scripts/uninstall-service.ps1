@@ -17,3 +17,5 @@ $deadline = (Get-Date).AddSeconds(10)
 while ((Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) -and (Get-Date) -lt $deadline) {
     Start-Sleep -Milliseconds 250
 }
+
+Remove-Item "$env:ProgramData\ScreenTimeManager" -Recurse -Force -ErrorAction SilentlyContinue

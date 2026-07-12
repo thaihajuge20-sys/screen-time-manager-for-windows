@@ -81,6 +81,11 @@ catch {
         Write-Host "--- Installed files ---"
         Get-ChildItem $InstallDir -Recurse | Select-Object FullName
     }
+    $serviceInstallLog = Join-Path $env:ProgramData "ScreenTimeManager\install-service.log"
+    if (Test-Path $serviceInstallLog) {
+        Write-Host "--- Service installation log ---"
+        Get-Content $serviceInstallLog
+    }
 }
 finally {
     $uninstaller = Join-Path $InstallDir "unins000.exe"
