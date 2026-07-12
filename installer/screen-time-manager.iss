@@ -23,7 +23,7 @@ LicenseFile=..\LICENSE
 
 [Files]
 Source: "..\target\release\screen-time-manager.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\scripts\install-service.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion
+Source: "..\scripts\install-service.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion; AfterInstall: InstallService
 Source: "..\scripts\uninstall-service.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 
@@ -31,13 +31,24 @@ Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 Name: "{group}\Screen Time Manager"; Filename: "{app}\screen-time-manager.exe"
 Name: "{group}\Uninstall Screen Time Manager"; Filename: "{uninstallexe}"
 
-[Run]
-Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\scripts\install-service.ps1"" -ExePath ""{app}\screen-time-manager.exe"""; Flags: runhidden waituntilterminated
-
 [UninstallRun]
 Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\scripts\uninstall-service.ps1"""; Flags: runhidden waituntilterminated; RunOnceId: "RemoveScreenTimeManagerService"
 
 [Code]
+procedure InstallService();
+var
+  ResultCode: Integer;
+  Parameters: String;
+begin
+  Parameters := '-NoProfile -ExecutionPolicy Bypass -File "' +
+    ExpandConstant('{app}\scripts\install-service.ps1') + '" -ExePath "' +
+    ExpandConstant('{app}\screen-time-manager.exe') + '"';
+  if (not Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
+      Parameters, '', SW_HIDE, ewWaitUntilTerminated, ResultCode)) or
+      (ResultCode <> 0) then
+    RaiseException(Format('Service installation failed with exit code %d.', [ResultCode]));
+end;
+
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 var
   ResultCode: Integer;

@@ -38,8 +38,9 @@ Describe "Screen Time Manager installer" {
         $UninstallService | Should -Match 'sc\.exe delete'
     }
 
-    It "runs service setup after files are installed and cleanup before removal" {
-        $Installer | Should -Match '\[Run\]'
+    It "checks service setup after files are installed and cleans up before removal" {
+        $Installer | Should -Match 'AfterInstall: InstallService'
+        $Installer | Should -Match 'RaiseException'
         $Installer | Should -Match 'install-service\.ps1'
         $Installer | Should -Match '\[UninstallRun\]'
         $Installer | Should -Match 'uninstall-service\.ps1'

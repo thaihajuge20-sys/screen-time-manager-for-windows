@@ -72,6 +72,15 @@ try {
 }
 catch {
     $failure = $_
+    Write-Host "Integration failure: $failure"
+    if (Test-Path $InstallLog) {
+        Write-Host "--- Inno Setup install log ---"
+        Get-Content $InstallLog
+    }
+    if (Test-Path $InstallDir) {
+        Write-Host "--- Installed files ---"
+        Get-ChildItem $InstallDir -Recurse | Select-Object FullName
+    }
 }
 finally {
     $uninstaller = Join-Path $InstallDir "unins000.exe"
