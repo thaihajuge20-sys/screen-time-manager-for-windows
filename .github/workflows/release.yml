@@ -45,7 +45,7 @@ jobs:
 
       - name: Verify installer rules
         shell: pwsh
-        run: Invoke-Pester tests/installer.Tests.ps1 -Output Detailed
+        run: Invoke-Pester tests/installer.Tests.ps1 -Output Detailed -CI
 
       - name: Get version from Cargo.toml
         id: version

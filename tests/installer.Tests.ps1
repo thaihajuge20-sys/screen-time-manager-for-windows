@@ -20,12 +20,12 @@ Describe "Screen Time Manager installer" {
         $InstallService | Should -Match 'ScreenTimeManagerService'
         $InstallService | Should -Match 'binPath='
         $InstallService | Should -Match '\-\-service'
-        $InstallService | Should -Match 'start= auto'
+        $InstallService | Should -Match '"start=", "auto"'
     }
 
     It "configures service recovery and starts the service" {
         $InstallService | Should -Match 'failure.*restart'
-        $InstallService | Should -Match 'sc\.exe start'
+        $InstallService | Should -Match 'Invoke-ServiceControl @\("start"'
     }
 
     It "removes the legacy scheduled task to prevent duplicate startup" {
