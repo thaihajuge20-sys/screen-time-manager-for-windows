@@ -51,6 +51,10 @@ jobs:
           $version = (Select-String -Path Cargo.toml -Pattern '^version = "(.+)"').Matches.Groups[1].Value
           & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DMyAppVersion=$version" installer\screen-time-manager.iss
 
+      - name: Verify install, watchdog recovery, and uninstall
+        shell: pwsh
+        run: .\tests\windows-integration.ps1 -InstallerPath (Get-ChildItem dist\ScreenTimeManager-Setup-*.exe | Select-Object -First 1).FullName
+
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:

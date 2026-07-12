@@ -52,5 +52,6 @@ Describe "Screen Time Manager installer" {
         $InstallerWorkflow | Should -Match 'Invoke-Pester'
         $InstallerWorkflow | Should -Match 'iscc'
         $InstallerWorkflow | Should -Match 'upload-artifact'
+        $InstallerWorkflow | Should -Match 'windows-integration\.ps1'
     }
 }
