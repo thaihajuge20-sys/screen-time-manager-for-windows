@@ -115,15 +115,18 @@ Once configured, only you can control the bot - it ignores messages from anyone 
 
 ---
 
-## Making It Start Automatically
+## Installation and Automatic Start
 
-To have Screen Time Manager start when Windows boots:
+Download and run `ScreenTimeManager-Setup-<version>.exe` as an administrator. The installer:
 
-1. Press `Win + R` on your keyboard
-2. Type `shell:startup` and press Enter
-3. Copy the Screen Time Manager app into this folder (or create a shortcut to it)
+- installs the app under Program Files;
+- registers an automatic Windows service;
+- starts the tray app when a user signs in;
+- restarts the tray app if it is ended in Task Manager.
 
-Now it will start automatically every time the computer turns on.
+The service does not appear in the normal Windows "Startup apps" list. A Windows administrator can
+still stop or delete the service or uninstall the program. For stronger parental-control boundaries,
+use a separate parent administrator account and make the child's account a standard user.
 
 ---
 
