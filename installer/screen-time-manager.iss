@@ -22,7 +22,7 @@ UninstallDisplayIcon={app}\screen-time-manager.exe
 LicenseFile=..\LICENSE
 
 [Files]
-Source: "..\target\x86_64-pc-windows-msvc\release\screen-time-manager.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\target\release\screen-time-manager.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\scripts\install-service.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion
 Source: "..\scripts\uninstall-service.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion

@@ -12,6 +12,10 @@ Describe "Screen Time Manager installer" {
         $Installer | Should -Match "DefaultDirName=\{autopf\}\\Screen Time Manager"
     }
 
+    It "packages the executable produced by a native Windows release build" {
+        $Installer | Should -Match 'target\\release\\screen-time-manager\.exe'
+    }
+
     It "registers the service with the stable identity and automatic startup" {
         $InstallService | Should -Match 'ScreenTimeManagerService'
         $InstallService | Should -Match 'binPath='
