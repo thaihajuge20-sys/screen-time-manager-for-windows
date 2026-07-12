@@ -13,6 +13,7 @@ mod dpi;
 mod i18n;
 mod mini_overlay;
 mod overlay;
+mod run_mode;
 mod telegram;
 mod tray;
 
@@ -39,6 +40,15 @@ use tray::{add_tray_icon, remove_tray_icon, window_proc};
 use std::sync::atomic::Ordering;
 
 fn main() {
+    if run_mode::parse_run_mode(std::env::args_os()) == run_mode::RunMode::Service {
+        // The Windows service entrypoint is added in the next implementation task.
+        return;
+    }
+
+    run_user_interface();
+}
+
+fn run_user_interface() {
     unsafe {
         // Set DPI awareness before creating any windows
         let _ = SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
