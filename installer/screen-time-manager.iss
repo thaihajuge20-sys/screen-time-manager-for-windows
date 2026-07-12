@@ -39,7 +39,7 @@ procedure InstallService();
 var
   ResultCode: Integer;
   Parameters: String;
-  ServiceLog: String;
+  ServiceLog: AnsiString;
   ServiceLogPath: String;
 begin
   ServiceLogPath := ExpandConstant('{tmp}\screen-time-manager-service-install.log');
